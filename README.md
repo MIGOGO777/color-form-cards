@@ -1,55 +1,33 @@
-# 🎨 颜色形态卡 Color Form Cards
+# 🎨 Kuuga 颜色思维 Skills
 
-一套给 AI Agent 使用的**颜色化思维形态系统**：把「探索 / 研究 / 决策 / 建造」四种工作形态映射为 🟢🔵🔴🟣 四种颜色，用户一句话即可切换 Agent 的思维模式。灵感来自假面骑士空我（Kamen Rider Kuuga）的形态切换——用颜色标识，干净利落。
+灵感来自《假面骑士空我》（Kamen Rider Kuuga）的形态切换：用颜色区分探索、证据判断、决策与施工的能力侧重。
 
-## 🎮 核心概念
+当前版本采用**白色主控＋获准的单色隔离叶子**。四个颜色做成独立 Skill；主控保持白色，根据问题建议颜色、模型与思考强度，用户批准工作单后再派发。Skill 本身不会创建隔离上下文。
 
-| 颜色 | 形态 | 蓝图 | 职责一句话 | 触发词 |
-|------|------|------|-----------|--------|
-| 🟢 绿 | Explorer | `思维形态 Blueprints/Explorer.md` | 改变**选项空间**：挑战假设、重构问题、看见更多可能 | 绿 / 变绿 |
-| 🔵 蓝 | Researcher | `思维形态 Blueprints/Researcher.md` | 改变**相信程度**：命题化、证据分级、因果核验 | 蓝 / 变蓝 |
-| 🔴 红 | Architect | `思维形态 Blueprints/Architect.md` | 改变**行动状态**：收敛选项、形成可执行承诺 | 红 / 变红 |
-| 🟣 紫 | Builder | `思维形态 Blueprints/Builder.md` | 改变**系统状态**：严谨建造、最小修改、步步为营 | 紫 / 变紫 |
-| ⚪ 白 | — | 日常模式 | 默认形态，自由切换 | 白 / 变白 |
+## 四个 Skill
 
-> 参考映射：绿·天马、蓝·青龙、红·全能 / 泰坦、紫·泰坦（空我的形态语言）
+| 颜色 | Skill | 必须交付 |
+|---|---|---|
+| 🟢 绿 | [kuuga-green-explore](skills/kuuga-green-explore/SKILL.md) | 值得验证的新路径：改变的假设、具体价值、代价、最小验证；没有增益时不凑数 |
+| 🔵 蓝 | [kuuga-blue-evidence](skills/kuuga-blue-evidence/SKILL.md) | 首句给事实结论：支持、反驳、部分支持或证据不足；随后给决定性证据及缺口 |
+| 🔴 红 | [kuuga-red-decide](skills/kuuga-red-decide/SKILL.md) | 首句给明确或条件判断；承担论证，不把可完成的专业判断交回用户 |
+| 🟣 紫 | [kuuga-purple-build](skills/kuuga-purple-build/SKILL.md) | 在已批范围内实现、修复和验证；保留原施工方法 |
 
-## 📁 两层结构
+蓝色判断“说法是否成立”，红色判断“基于事实应该怎么选”。红色确缺决定性证据时可以明确暂不能判断；判断不等于行动许可。Skill 正文沿用作者称呼 sui；其他使用者可替换称呼，保留职责与批准边界。
 
-- **`思维形态 Blueprints/`** — 完整思维形态蓝图，给**主 Agent** 切换思维模式。每份含 Mission / 何时进入 / 核心动作 / 自适应深度与停止门 / 交付 / 边界纪律。
-- **`子agent 颜色底色卡/`** — 精简工作卡（Lite），给**叶子 Agent** 设定轻量工作底色 + 类型化回执（`Option Set` / `Evidence Packet` / `Decision Packet` / `Decision Gap`），不替代主 Agent 的完整形态蓝图。
+## 使用流程
 
-## ✨ 设计要点
+1. 将四个 skills/ 子目录安装到当前运行时实际支持的 Skill 发现目录，并在新任务核验发现来源；也可以在已批工作单中提供可达的源文件绝对路径。
+2. 按需合并 [主控入口片段](docs/AGENTS.override.example.md)，保留自己的现有公共规则。主控准备建议时读取 [调度协议](docs/dispatch-protocol.md)。
+3. 用户批准对应工作单后，主控派发一个原子任务、一个颜色。Codex 原生可用的无历史继承参数为 fork_turns="none"；实际可用工具、模型和强度须预检，不套用其他运行时。
+4. 叶子直接读取一个 Skill；不转读旧路由器或其他颜色正文，不继续派发。主控核对证据并合成答复。
 
-- **独立自洽**：每份蓝图单独加载即满血，匹配「开新会话挂不同色」的用法。
-- **越界不自动交接**：遇到不归本形态的问题，直接指出「这问题适合 X 色」，由用户转达给对应实例；叶子 Agent 只向主 Agent 回执。
-- **结构化回执**：每个叶子形态返回固定字段的包，`suggested_next_color` / `needed_color` 只作建议，是否串联下一颜色由主 Agent 决定并重新派发。
-- **自适应深度**：不设全局固定的路径数 / 层级数 / 打分表；问题越小回执越轻，以信息增益和判断影响决定何时停止。
-- **黑色形态**：`思维形态 Blueprints/Claude黑色施工形态.md` 是 Claude 作为 Codex 直接管理的独立施工员时使用的受限施工协议（任务包驱动、最小修改、失败显性化）。
+不默认运行四颜色流水线。模型、思考强度和颜色分开选择；“请深度思考”不是强度参数。授权、暂停恢复和验收细节只维护在调度协议中。
 
-## 📄 文件清单
+## 迁移与验证
 
-```
-color-form-cards/
-├── README.md
-├── 思维形态 Blueprints/
-│   ├── index.md
-│   ├── Explorer.md          # 🟢 绿 · 选项探索者
-│   ├── Researcher.md        # 🔵 蓝 · 证据审计者
-│   ├── Architect.md         # 🔴 红 · 决策收敛者
-│   ├── Builder.md           # 🟣 紫 · 开发与多代理协同协议
-│   └── Claude黑色施工形态.md # ⚫ 黑 · 受限施工协议
-└── 子agent 颜色底色卡/
-    ├── index.md
-    ├── Green Explorer Lite.md    # 🟢 返回 Option Set
-    ├── Blue Researcher Lite.md   # 🔵 返回 Evidence Packet
-    ├── Red Architect Lite.md     # 🔴 返回 Decision Packet / Decision Gap
-    └── Purple Builder Lite.md    # 🟣 修改交付回执
-```
+2026-10-01：四个包统一为 kuuga- 前缀；绿色强化路径价值，蓝色强化命题结论，红色强化明确判断；紫色保留施工方法。旧蓝图和 Lite 卡移入 [历史目录](archive/2026-10-01-legacy/README.md)，不参与新加载链。旧主控直接切色与自动叠加方案不再作为当前使用方式。
 
-## 📝 使用
+本次验证仅包括四个 Skill 格式、源文件一致性和仓库相对链接。安装、原生发现、实际隔离与模型/强度未在本仓库验证；发布成功不证明运行生效。无历史继承不保证没有系统、插件或记忆注入，上下文隔离也不等于文件沙箱。
 
-1. 主 Agent 判断当前任务该挂哪种颜色。
-2. 主 Agent 说话时「变绿 / 变蓝 / 变红 / 变紫 / 变白」即切换思维形态。
-3. 派发叶子 Agent 时挂一张对应颜色的 Lite 卡，补齐任务范围、输入、读写边界、禁止事项和验收标准。
-4. 叶子返回类型化回执（`Option Set` / `Evidence Packet` / `Decision Packet`）；主 Agent 根据 `suggested_next_color` 决定是否串联下一颜色。
+Decisions API 暂不加入第五颜色或默认调用链；是否作为可选路由工具接入，需另行核验文档、权限、成本和真实收益。
